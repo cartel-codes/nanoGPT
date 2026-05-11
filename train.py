@@ -20,6 +20,7 @@ import os
 import time
 import math
 import pickle
+import json
 from contextlib import nullcontext
 
 import numpy as np
@@ -103,6 +104,7 @@ print(f"tokens per iteration will be: {tokens_per_iter:,}")
 
 if master_process:
     os.makedirs(out_dir, exist_ok=True)
+    os.makedirs('logs', exist_ok=True)
 torch.manual_seed(1337 + seed_offset)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
@@ -271,6 +273,17 @@ while True:
                 "lr": lr,
                 "mfu": running_mfu*100, # convert to percentage
             })
+        # log metrics to JSON for the UI dashboard
+        metrics_entry = {
+            "step": iter_num,
+            "train_loss": losses['train'].item(),
+            "val_loss": losses['val'].item(),
+            "lr": lr,
+            "mfu": running_mfu * 100,
+            "timestamp": time.time(),
+        }
+        with open(os.path.join('logs', 'metrics.json'), 'a') as _mf:
+            _mf.write(json.dumps(metrics_entry) + '\n')
         if losses['val'] < best_val_loss or always_save_checkpoint:
             best_val_loss = losses['val']
             if iter_num > 0:
