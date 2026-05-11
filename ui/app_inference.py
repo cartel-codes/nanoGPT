@@ -186,6 +186,20 @@ def build_ui():
     return demo
 
 
+def _in_colab() -> bool:
+    try:
+        import google.colab  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 if __name__ == "__main__":
-    print(f"nanoGPT Inference UI  |  device={DEVICE}  |  out={OUT_DIR}")
-    build_ui().launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)
+    in_colab = _in_colab()
+    print(f"nanoGPT Inference UI  |  device={DEVICE}  |  out={OUT_DIR}  |  colab={in_colab}")
+    build_ui().launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        share=in_colab,   # True in Colab → gets a public gradio.live URL
+        show_error=True,
+    )
